@@ -1,0 +1,12 @@
+Venv should be made with python 3.11
+
+git config --global http.postBuffer 524288000
+git config --global http.lowSpeedLimit 0
+git config --global http.lowSpeedTime 999999
+
+Increased git commit timeout lmfao
+
+5/4 saturday
+Created focus.jsx as the main window.
+nav.jsx is the navigation bar, and needs to control 2 variables, activepage and theme
+These variables are hosted in focus.jsx and we send the handlers down instead.

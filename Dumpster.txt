@@ -1,0 +1,258 @@
+
+import katex from "katex";
+import "katex/dist/katex.min.css";
+
+  function InlineLaTeX({ formula }) {
+    const spanRef = useRef(null);
+
+    useEffect(() => {
+      if (spanRef.current) {
+        katex.render(formula, spanRef.current, {
+          throwOnError: false,
+          displayMode: false,
+        });
+      }
+    }, [formula]);
+
+    return <span ref={spanRef} />;
+  }
+
+  // A component that renders block LaTeX
+  function BlockLaTeX({ formula }) {
+    const divRef = useRef(null);
+
+    useEffect(() => {
+      if (divRef.current) {
+        katex.render(formula, divRef.current, {
+          throwOnError: false,
+          displayMode: true,
+        });
+      }
+    }, [formula]);
+
+    return <div ref={divRef} className="my-4" />;
+  }
+
+<div
+        className={`${status == 4 ? "mt-15 mb-150 translate-y-0 opacity-100" : "translate-y-15 opacity-0"} text-gray relative overflow-y-auto rounded-md bg-white p-4 ring-1 ring-blue-500 transition-all duration-900`}
+      >
+        <BlockLaTeX formula={GeminiResponse} />
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { useState , useRef} from 'react';
+import './App.css'
+import axios from 'axios';
+
+
+function App() {
+ 
+  const [toggle , setToggle] = useState(false);
+  const [audioURL, setAudioURL] = useState(null);
+  const [waveformImg, setWaveformImg] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunks = useRef([]);
+
+
+  const uploadAudio = (audioBlob) => {
+    console.log("Uploading audio of type:", audioBlob.type); // Debugging
+ 
+    const formData = new FormData();
+    formData.append("file", audioBlob, "recorded.webm"); // Ensure correct file extension
+ 
+    axios.post("http://127.0.0.1:5000/upload-audio", formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    })
+    .then((res) => {
+      console.log("Upload successful:", res.data);
+      setWaveformImg(data:image/png;base64,${res.data.waveform});
+    })
+    .catch((err) => {
+      alert("error")
+      console.error("Upload failed:", err);
+    });
+  };
+ 
+
+
+  const startRecord = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunks.current.push(event.data);
+        }
+      };
+
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' }); // Use 'audio/webm'
+        const url = URL.createObjectURL(audioBlob);
+        setAudioURL(url);
+        uploadAudio(audioBlob);
+      };
+
+
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunks.current = [];
+      mediaRecorder.start();
+      setToggle(true);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+    }
+  };
+
+
+  const stopRecord = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setToggle(false);
+    }
+  };
+
+
+  return (
+    <>
+        {!toggle && <button onClick={startRecord}>click me to record</button>}
+        { toggle && <button onClick={stopRecord}>click to stop</button>}
+        {audioURL && <audio src={audioURL} controls></audio>}
+        {waveformImg && <img src={waveformImg} alt="Waveform" />}
+    </>
+  )
+}
+
+
+export default App
+
+
+================================
+
+from flask import Flask, request, jsonify
+import librosa
+import librosa.display
+import matplotlib
+matplotlib.use('Agg')  # Use a non-interactive backend
+
+
+import matplotlib.pyplot as plt
+
+
+import io
+import base64
+from flask_cors import CORS
+from pydub import AudioSegment  # Convert audio formats
+
+
+app = Flask(_name_)
+CORS(app)
+
+
+def generate_waveform(y, sr):
+    fig, ax = plt.subplots(figsize=(6, 3))
+    librosa.display.waveshow(y, sr=sr, ax=ax)
+    ax.set_title("Waveform")
+
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight')
+    plt.close(fig)
+    buf.seek(0)
+   
+    return base64.b64encode(buf.getvalue()).decode('utf-8')
+
+
+@app.route('/upload-audio', methods=['POST'])
+def process_audio():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+   
+    file = request.files['file']
+    print("Received file:", file.filename)
+    print("Content-Type:", file.content_type)
+    #print("size:",len(file))
+
+
+    try:
+        # Convert .webm to .wav before processing
+        audio = AudioSegment.from_file(file, format="webm")  # Convert .webm to audio
+        wav_io = io.BytesIO()
+        audio.export(wav_io, format="wav")  # Convert to WAV
+        wav_io.seek(0)
+
+
+        # Load the converted WAV file into librosa
+        y, sr = librosa.load(wav_io, sr=22050)
+
+
+        # Generate waveform image
+        waveform_img = generate_waveform(y, sr)
+
+
+        return jsonify({'waveform': waveform_img})
+
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/')
+def home():
+    return "Hello, Flask!"
+
+
+if _name_ == '_main_':
+    app.run(debug=True)
+
+
+
+
+
+
+
+    ===============
+
+  async function AxiosAudioHandler() {
+      try {
+        const response = await axios.post(
+          "end/upload-audio",
+          fdat,
+          headers : {
+            "Content-Type"
+          }
+        )
+      }
+    }
